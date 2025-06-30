@@ -2,9 +2,9 @@ import streamlit as st
 import requests
 import json
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv # Commenté ou supprimé car nous utilisons st.secrets
 
-load_dotenv() # Charge les variables d'environnement du fichier .env
+# load_dotenv() # Commenté ou supprimé car nous utilisons st.secrets
 
 # Titre de l'application Streamlit
 st.set_page_config(page_title="Générateur de Landing Page IA", layout="wide") # Utilisation de 'wide' pour un layout étendu
@@ -25,11 +25,12 @@ with col1:
 
     if st.button("Générer la Landing Page", type="primary"):
         if user_prompt:
-            api_key = os.getenv('GEMINI_API_KEY')
-
-            if not api_key:
-                st.error("Erreur : La clé API Gemini (GEMINI_API_KEY) n'est pas configurée dans les variables d'environnement.")
-                st.warning("Veuillez définir votre clé API en tant que variable d'environnement dans un fichier `.env` à la racine de votre projet.")
+            # Récupérer la clé API depuis les secrets Streamlit
+            try:
+                api_key = st.secrets["GEMINI_API_KEY"]
+            except KeyError:
+                st.error("Erreur : La clé API Gemini (GEMINI_API_KEY) n'est pas configurée dans les secrets Streamlit.")
+                st.warning("Pour déployer sur Streamlit Cloud, ajoutez votre clé API dans les secrets de votre application.")
                 st.stop()
 
             # Placeholder pour le message de chargement
@@ -84,8 +85,7 @@ with col1:
                     generated_html = result["candidates"][0]["content"]["parts"][0]["text"]
                 else:
                     loading_message_placeholder.error("Désolé, je n'ai pas pu générer de contenu HTML. La réponse de l'API était inattendue.")
-                    # st.json(result) # Optionnel: pour le débogage, décommenter si besoin
-                    generated_html = "" # Assurez-vous que generated_html est vide en cas d'erreur
+                    generated_html = ""
             
             except requests.exceptions.RequestException as e:
                 loading_message_placeholder.error(f"Erreur lors de l'appel à l'API Gemini: {e}")
@@ -101,7 +101,7 @@ with col1:
                 loading_message_placeholder.empty() # Efface le message de chargement une fois terminé
         else:
             st.warning("Veuillez saisir une description pour générer la landing page.")
-            generated_html = "" # Assurez-vous que generated_html est vide si aucun prompt n'est fourni
+            generated_html = ""
 
         # Stocker le HTML généré dans la session d'état pour qu'il puisse être affiché par l'aperçu
         st.session_state.generated_html = generated_html
